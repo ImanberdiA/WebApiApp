@@ -1,0 +1,175 @@
+﻿
+<div id="tableBlock"></div>
+<div id="editBlock">
+    <h3>Редактирование данных человека</h3>
+    <table>
+        <tr><td><input type="hidden" id="editId" /></td><td></td></tr>
+        <tr><td><label>ИИН: </label></td><td><input type="text" id="editIIN" /></td></tr>
+        <tr><td><label>Имя: </label></td><td><input type="text" id="editFirstName" /></td></tr>
+        <tr><td><label>Фамилия: </label></td><td><input type="text" id="editLastName" /></td></tr>
+        <tr><td><label>Дата рождения: </label></td><td><input type="text" id="editBirthDate" /></td></tr>
+    </table>
+    <button id="editPerson">Сохранить</button>
+</div>
+<div id="createBlock">
+    <h3>Добавление человека</h3>
+    <table>
+        <tr><td><label>ИИН: </label></td><td><input type="text" id="addIIN" /></td></tr>
+        <tr><td><label>Имя: </label></td><td><input type="text" id="addFirstName" /></td></tr>
+        <tr><td><label>Фамилия: </label></td><td><input type="text" id="addLastName" /></td></tr>
+        <tr><td><label>Дата рождения: </label></td><td><input type="text" id="addBirthDate" /></td></tr>
+    </table>
+    <button id="addPerson">Сохранить</button>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        GetAllPersons();
+
+        $("#GetPerson").click(function (event) {
+            event.preventDefault();
+            GetAllPersons();
+        });
+
+        $("#editPerson").click(function (event) {
+            event.preventDefault();
+            EditPerson();
+        });
+
+        $("#addPerson").click(function (event) {
+            event.preventDefault();
+            AddPerson();
+        });
+
+    });
+
+    function GetAllPersons() {
+
+        $.ajax({
+            url: '/api/person',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                WriteResponse(data);
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    function AddPerson() {
+        var person = {
+            IIN: $('#addIIN').val(),
+            FirstName: $('#addFirstName').val(),
+            LastName: $('#addLastName').val(),
+            BirthDate: $('#addBirthDate').val()
+        };
+
+        $.ajax({
+            url: '/api/person',
+            type: 'POST',
+            data: JSON.stringify(person),
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllPersons();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+
+
+    function DeletePerson(id) {
+
+        $.ajax({
+            url: '/api/person/' + id,
+            type: 'DELETE',
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllPersons();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+
+
+    function EditPerson() {
+        var id = $('#editId').val()
+       
+        var person = {
+            Id: $('#editId').val(),
+            IIN: $('#editIIN').val(),
+            FirstName: $('#editFirstName').val(),
+            LastName: $('#editLastName').val(),
+            BirthDate: $('#editBirthDate').val()
+        };
+        $.ajax({
+            url: '/api/person/' + id,
+            type: 'PUT',
+            data: JSON.stringify(person),
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllPersons();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    
+    function WriteResponse(persons) {
+        var strResult = "<table><th>ID</th><th>ИИН</th><th>Имя</th><th>Фамилия</th><th>Дата рождения</th>";
+        $.each(persons, function (index, person) {
+            strResult += "<tr><td>" + person.Id + "</td><td> " + person.IIN + "</td><td> " + person.FirstName + "</td><td>" +
+                person.LastName + "</td><td>" + person.BirthDate +
+                "</td><td><a id='editItem' data-item='" + person.Id + "' onclick='EditItem(this);' >Редактировать</a></td>" +
+                "<td><a id='delItem' data-item='" + person.Id + "' onclick='DeleteItem(this);' >Удалить</a></td></tr>";
+        });
+        strResult += "</table>";
+        $("#tableBlock").html(strResult);
+
+    }
+
+    function DeleteItem(el) {
+        var id = $(el).attr('data-item');
+        DeletePerson(id);
+    }
+
+    function EditItem(el) {
+        var id = $(el).attr('data-item');
+        GetPerson(id);
+    }
+
+    function ShowPerson(person) {
+        if (person != null) {
+            $("#createBlock").css('display', 'none');
+            $("#editBlock").css('display', 'block');
+            $("#editId").val(person.Id);
+            $("#editIIN").val(person.IIN);
+            $("#editFirstName").val(person.FirstName);
+            $("#editLastName").val(person.LastName);
+            $("#editBirthDate").val(person.BirthDate);
+        }
+        else {
+            alert("Такая книга не существует");
+        }
+    }
+
+    function GetPerson(id) {
+
+        $.ajax({
+            url: '/api/person/' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                ShowPerson(data);
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+</script>
